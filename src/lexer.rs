@@ -6,11 +6,16 @@ pub enum LexItem {
     RBracket,
     Quote,
     Colon,
-    Comma,
+    BraceComma,
+    BracketComma,
     Str(String),
     Num(String),
+    Null,
+    True,
+    False,
 }
 
+// it was a stupid decision to do it this way, but im too lazy to refactor it rn
 #[derive(PartialEq, Debug)]
 pub enum Environment {
     Scope,            // {# ...}
@@ -18,29 +23,39 @@ pub enum Environment {
     PostItemName,     // {"..."#}
     PostPostItemName, // {"...": #}
     ItemValueInside,  // {"...": "#"} or {"...": 621#.126}
-    ItemValueNumber,  // {"...": .#.}
+    ItemValueToken,   // {"...": .#.}
     PostItemValue,    // {"...": ...#}
+    ListScope,        // {"...": [#]}
 }
 
-pub fn lex(input: &String) -> Result<Vec<LexItem>, String> {
+// used when a non-string value is to be appended to the lex stack
+fn infer_token(s: &String) -> LexItem {
+    match s.as_str() {
+        "True" => LexItem::True,
+        "False" => LexItem::False,
+        "null" => LexItem::Null,
+        x => LexItem::Num(x.to_owned()),
+    }
+}
+
+// turn the input into well-defined lexed objects
+pub fn lex(input: String) -> Vec<LexItem> {
     let mut result = Vec::new();
 
-    let mut char_bank: Vec<char> = Vec::new();
+    let mut char_bank = String::new();
     let mut env: Option<Environment> = None;
 
-    let mut it = input.chars().peekable();
-    while let Some(&c) = it.peek() {
+    // let mut it = input.chars().peekable();
+    for c in input.chars() {
         // println!("processing char {c}");
         match c {
             '{' => match env {
                 Some(Environment::ItemValueInside) | Some(Environment::ItemNameInside) => {
                     char_bank.push(c);
-                    it.next();
                 }
-                None | Some(Environment::PostPostItemName) => {
+                Some(Environment::PostPostItemName) | None => {
                     env = Some(Environment::Scope);
                     result.push(LexItem::LBrace);
-                    it.next();
                 }
                 _ => {
                     dbg!(&env, &c);
@@ -49,23 +64,22 @@ pub fn lex(input: &String) -> Result<Vec<LexItem>, String> {
             '}' => match env {
                 Some(Environment::ItemValueInside) | Some(Environment::ItemNameInside) => {
                     char_bank.push(c);
-                    it.next();
                 }
-                Some(Environment::ItemValueNumber) => {
+                Some(Environment::ItemValueToken) => {
                     if char_bank.len() > 0 {
-                        result.push(LexItem::Num(String::from_iter(char_bank)));
-                        char_bank = vec![];
+                        result.push(infer_token(&char_bank));
+                        char_bank = String::new();
                     }
                     result.push(LexItem::RBrace);
-                    it.next();
+                    env = Some(Environment::Scope);
                 }
                 Some(Environment::PostItemValue) | Some(Environment::Scope) => {
                     if char_bank.len() > 0 {
-                        result.push(LexItem::Str(String::from_iter(char_bank)));
-                        char_bank = vec![];
+                        result.push(LexItem::Str(char_bank));
+                        char_bank = String::new();
                     }
                     result.push(LexItem::RBrace);
-                    it.next();
+                    env = Some(Environment::Scope);
                 }
                 _ => {
                     dbg!(&env, &c);
@@ -73,22 +87,19 @@ pub fn lex(input: &String) -> Result<Vec<LexItem>, String> {
             },
             '"' => match env {
                 Some(Environment::ItemNameInside) => {
-                    result.push(LexItem::Str(String::from_iter(char_bank)));
+                    result.push(LexItem::Str(char_bank));
                     result.push(LexItem::Quote);
                     env = Some(Environment::PostItemName);
-                    char_bank = vec![];
-                    it.next();
+                    char_bank = String::new();
                 }
                 Some(Environment::ItemValueInside) => {
-                    result.push(LexItem::Str(String::from_iter(char_bank)));
+                    result.push(LexItem::Str(char_bank));
                     env = Some(Environment::PostItemValue);
-                    char_bank = vec![];
-                    it.next();
+                    char_bank = String::new();
                 }
                 Some(Environment::Scope) => {
                     result.push(LexItem::Quote);
                     env = Some(Environment::ItemNameInside);
-                    it.next();
                 }
                 _ => {
                     dbg!(&env, &c);
@@ -97,12 +108,10 @@ pub fn lex(input: &String) -> Result<Vec<LexItem>, String> {
             ':' => match env {
                 Some(Environment::ItemValueInside) | Some(Environment::ItemNameInside) => {
                     char_bank.push(c);
-                    it.next();
                 }
                 Some(Environment::PostItemName) => {
                     result.push(LexItem::Colon);
                     env = Some(Environment::PostPostItemName);
-                    it.next();
                 }
                 _ => {
                     dbg!(&env, &c);
@@ -111,77 +120,87 @@ pub fn lex(input: &String) -> Result<Vec<LexItem>, String> {
             ',' => match env {
                 Some(Environment::ItemValueInside) | Some(Environment::ItemNameInside) => {
                     char_bank.push(c);
-                    it.next();
                 }
-                Some(Environment::PostItemValue) => {
+                Some(Environment::PostItemValue) | Some(Environment::Scope) => {
                     if char_bank.len() > 0 {
-                        result.push(LexItem::Str(String::from_iter(char_bank)));
-                        char_bank = vec![];
+                        result.push(LexItem::Str(char_bank));
+                        char_bank = String::new();
                     }
 
-                    result.push(LexItem::Comma);
+                    result.push(LexItem::BraceComma);
                     env = Some(Environment::Scope);
-                    it.next();
                 }
-                Some(Environment::ItemValueNumber) => {
+                Some(Environment::ItemValueToken) => {
                     if char_bank.len() > 0 {
-                        result.push(LexItem::Num(String::from_iter(char_bank)));
-                        char_bank = vec![];
+                        result.push(infer_token(&char_bank));
+                        char_bank = String::new();
                     }
 
-                    result.push(LexItem::Comma);
+                    result.push(LexItem::BraceComma);
                     env = Some(Environment::Scope);
-                    it.next();
+                }
+                Some(Environment::ListScope) => {
+                    if char_bank.len() > 0 {
+                        result.push(infer_token(&char_bank));
+                        char_bank = String::new();
+                    }
+                    result.push(LexItem::BracketComma);
+                    env = Some(Environment::ListScope);
                 }
                 _ => {
                     dbg!(&env, &c);
                 }
             },
-            // '[' => match env {
-            //     Some(Environment::ItemValueInside) | Some(Environment::ItemNameInside) => {
-            //         char_bank.push(c);
-            //         it.next();
-            //     }
-            //     Some(Environment::Scope) => {
-            //         result.push(LexItem::LBracket);
-            //         env = Some(Environment::ItemNameInside);
-            //         it.next();
-            //     }
-            //     _ => {
-            //         panic!("Unexpected environment: {env:?}");
-            //     }
-            // },
-            '\n' => {
-                it.next();
-                continue;
-            }
-            '\t' => {
-                it.next();
+            '[' => match env {
+                Some(Environment::ItemValueInside) | Some(Environment::ItemNameInside) => {
+                    char_bank.push(c);
+                }
+                Some(Environment::PostPostItemName) => {
+                    result.push(LexItem::LBracket);
+                    env = Some(Environment::ListScope);
+                }
+                _ => {
+                    dbg!(&env, &c);
+                }
+            },
+            ']' => match env {
+                Some(Environment::ItemValueInside) | Some(Environment::ItemNameInside) => {
+                    char_bank.push(c);
+                }
+                Some(Environment::ListScope) => {
+                    if char_bank.len() > 0 {
+                        result.push(infer_token(&char_bank));
+                        char_bank = String::new();
+                    }
+
+                    result.push(LexItem::RBracket);
+                    env = Some(Environment::PostItemValue);
+                }
+                _ => {
+                    dbg!(&env, &c);
+                }
+            },
+            '\n' | '\t' | '\r' => {
                 continue;
             }
             ' ' => match env {
                 Some(Environment::ItemValueInside) | Some(Environment::ItemNameInside) => {
                     char_bank.push(c);
-                    it.next();
                 }
                 _ => {
-                    it.next();
                     continue;
                 }
             },
             _ => {
-                match env {
-                    Some(Environment::PostPostItemName) => {
-                        env = Some(Environment::ItemValueNumber);
-                    }
-                    _ => (),
+                if env == Some(Environment::PostPostItemName) {
+                    env = Some(Environment::ItemValueToken);
                 }
                 char_bank.push(c);
-                it.next();
             }
         }
     }
-    Ok(result)
+
+    result
 }
 
 #[cfg(test)]
@@ -189,7 +208,7 @@ mod tests {
     use super::lex;
     use super::LexItem;
 
-    fn match_vecs<T: PartialEq>(v1: Vec<T>, v2: Vec<T>) {
+    fn assert_vecs<T: PartialEq>(v1: Vec<T>, v2: Vec<T>) {
         assert!(v1.len() == v2.len());
         for i in 0..v1.len() {
             assert!(v1[i] == v2[i]);
@@ -198,9 +217,6 @@ mod tests {
 
     #[test]
     fn t() {
-        match_vecs(
-            lex(&String::from("{}")).unwrap(),
-            vec![LexItem::LBrace, LexItem::RBrace],
-        );
+        assert_vecs(lex("{}".into()), vec![LexItem::LBrace, LexItem::RBrace]);
     }
 }

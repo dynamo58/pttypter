@@ -2,7 +2,10 @@
 name = "pttypter"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+author = "Marek Smolík"
+about = "A small CLI tool to pretty-print JSON"
 
 [dependencies]
+pico-args = "0.5.0"
+nu-ansi-term = "0.46.0"
+term_size = "0.3.2"
