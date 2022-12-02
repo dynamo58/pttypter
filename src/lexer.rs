@@ -94,15 +94,20 @@ pub fn lex(input: String) -> Vec<LexItem> {
                 }
                 Some(Environment::ItemValueInside) => {
                     result.push(LexItem::Str(char_bank));
-                    env = Some(Environment::PostItemValue);
                     char_bank = String::new();
+                    result.push(LexItem::Quote);
+                    env = Some(Environment::PostItemValue);
                 }
                 Some(Environment::Scope) => {
                     result.push(LexItem::Quote);
                     env = Some(Environment::ItemNameInside);
                 }
+                Some(Environment::PostPostItemName) => {
+                    result.push(LexItem::Quote);
+                    env = Some(Environment::ItemValueInside);
+                }
                 _ => {
-                    dbg!(&env, &c);
+                    dbg!(&env);
                 }
             },
             ':' => match env {

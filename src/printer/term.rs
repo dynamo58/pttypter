@@ -1,4 +1,4 @@
-use nu_ansi_term::Color;
+use ansi_term::Color;
 
 use super::ThemeKind;
 use crate::lexer::LexItem;
@@ -7,7 +7,7 @@ use crate::printer::{GRUVBOX_DARK, GRUVBOX_LIGHT};
 // just a wrapper to make the upcoming code a bit cleaner
 // theme background is supressed when outputting to terminal
 fn col(fg: (u8, u8, u8), input: &str) {
-    print!("{}", Color::Rgb(fg.0, fg.1, fg.2).paint(input));
+    print!("{}", Color::RGB(fg.0, fg.1, fg.2).paint(input));
 }
 
 pub fn print(lexed: Vec<LexItem>, theme_kind: ThemeKind) {

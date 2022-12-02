@@ -1,0 +1,144 @@
+\documentclass[11pt, letterpaper]{article}
+\usepackage{graphicx}
+\usepackage{fancybox}
+\usepackage[utf8]{inputenc}
+\usepackage{epsfig,graphicx}
+\usepackage{multicol,pst-plot}
+\usepackage{pstricks}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{eucal}
+\usepackage{tcolorbox}
+\usepackage[czech]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{hyperref}
+\usepackage{lipsum}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{float}
+\setlength{\parindent}{0em}
+\setlength{\parskip}{1em}
+
+\lstset{basicstyle=\ttfamily,breaklines=true}
+
+\lstset{extendedchars=\true}
+\lstset{inputencoding=ansinew}
+\usepackage{xcolor}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\begin{document}
+ 
+\begin{center}
+\vfill
+{\Huge \textbf{pttypter}}
+\vfill
+{\huge Programátorská příručka} \\
+{\large verze \texttt{1.0.0}}
+\vfill
+{\Large Marek Smolík (62880168)} \\
+\today
+\vfill
+\end{center}
+
+\section{Přehled codebase}
+
+Celá kódová báze programu je v jazyku Rust, konkrétně je využit program Cargo, který slouží ke správě Rustového projektu. Rust je vysoce výkonný nízkoúrovňový jazyk pro systémové programování, čiže je schopen zvládnout i rozsáhlé vstupy.
+
+\section{Rozvržení souborů}
+Rozvržení souborové struktury je striktně podřízeno řežii Cargo. Kořenový adresář obsahuje
+
+\begin{itemize}
+    \item složku \texttt{src} obsahující samotný zdrojový rustový kód (jehož vstupním bodem je \texttt{src/main.rs}),~
+    \item soubor \texttt{Cargo.toml} obsahující metadata o projektu a případné dependencies,
+    \item soubor \texttt{Cargo.lock} obsahující podrobné informace o specifických verzích dependencies (analog souboru \texttt{package.lock}, pro JavaScriptové developery).
+\end{itemize}
+
+\section{Externí knihovny}
+Rustový ekosystém je založen na používání komunitních balíčku (tzv. \textit{crates}). Z nich jsou  \texttt{pttypter}em jsou využívány
+\begin{itemize}
+    \item \texttt{pico-args} verze \texttt{0.5.0} pro parsování vstupních argumentů z příkazového řádku,
+    \item \texttt{ansi\_term} pro jednodušší použití ANSI kódů v terminálu.
+\end{itemize}
+
+\section{Průběh exekuce}
+Jak již bylo řečeno, vstupním bodem programu je \texttt{src/main.rs}. Ten má dále speciální funkci \texttt{main}, která se automaticky spustí po spuštění programu. Hned na začátku proběhne nejprve kontrola vstupních argumentů ze kterých je získán barevný režim a výstupní zařízení (respektive jsou načtena výchozí nastavení). Pokud však argumenty neobsahují vstupní kód, je zahájen proces načítání vstupu přímo ze standartního vstupu (\texttt{STDIN}). To umožňuje v unixových terminálech využít rour k posílání vstupního kódu \texttt{pttypteru} přímo. Pokud však není možné získat vstup, je proces ukončen (s návratovým kódem \texttt{1}).
+
+Nuže pokud je vstup získán, je následovně na základě volby způsobu výstupu zvolena příslušná „tiskárna“. Pro HTML+CSS výstup se nachází v \texttt{src/printer/html.rs} a pro terminál v \texttt{src/printer/term.rs}. Vybrané tiskárně je následně předán zvolený barevný režim a vstupní JSON. Ten však nejprve projde lexerem.
+
+Lexer je umísten v \texttt{src/lex.rs}. Slouží k převádění kódu na sekvenci tokenů, o nichž lze jednoznačně říci, jak je reprezentovat. Jeho jádrem je enumerace těchto tokenů
+\begin{lstlisting}
+pub enum LexItem {
+    LBrace,
+    RBrace,
+    LBracket,
+    RBracket,
+    Quote,
+    Colon,
+    BraceComma,
+    BracketComma,
+    Str(String),
+    Num(String),
+    Null,
+    True,
+    False,
+}
+\end{lstlisting}
+
+Zde už se nachází první z konsekvencí faktu, že \texttt{pttypter} \textbf{neprovádí žádnou validitu kódu}. Pouze se snaží co nejlépe kód ztokenizovat. Zde konkrétně je to vidno na 11. řádku, kde je JSONové číslo reprezentované pouhým řetězcem znaků, nikoliv „skutečným“ číslem.
+
+Samotné lexování je prováděno tak, že je iterováno postupně přes každý znak vstupu. Přitom je zachována informace o současném „prostředí“. Tím je reprezentováno, kde se momentálně exekuce nachází vzhledem k syntaktické struktuře JSONu a dle toho je s nově načtenými znaky různě zacházeno. Například se znakem \texttt{:} bude jinak zacházeno
+\begin{itemize}
+    \item je-li momentálně zadáván název pole, nebo
+    \item bylo-li právě zakončeno zadávání názvu pole uvozovkou a je nyní \texttt{:} očekávána pro přechod ku hodnotě pole.
+\end{itemize}
+
+Když byl celý vstup zpracován, lexer vrátí vektor (list) těchto položek \texttt{LexItem}. Následně přebírá otěže příslušná tiskárna. Každá z nich funguje samozřejmě trochu jinak, avšak obě si načtou barvy příslušného motivu pevně zakódované v souboru \texttt{src/printer/mod.rs}. Samotné barvy jsou reprezentované formátem RGB, tedy uspořádanou trojicí 8-bitových čísel reprezentující červenou, zelenou a modrou složku barvy. V této situaci je tento formát výhodný, jelikož
+\begin{enumerate}
+    \item knihovna \texttt{ansi\_term} je schopná RGB barvy převádět do ANSI kódu,
+    \item CSS podporuje RGB barvy.
+\end{enumerate}
+
+Tedy není nutné tyto hodnoty nějak transformovat. Oba printery na konci procedury vrátí řetězec znaků, který je následovně vypsán na standartní výstup (\texttt{STDOUT}) a programem je vrácen výstupový kód \texttt{0}. Snad už jen dodat, že výstup je indentován 2 mezerami a jednotlivé položky listů neodřádkovávají za jejich mezerou. Ostatní možné volby pro formátovní jsou ty používané u souborů JSON zcela běžně.
+
+\section{Kompilace a cross-platform}
+Žádné z vývojových prostředí nebyly až na použití ANSI kódů pro terminál platformově specifické. ANSI kódy však může zkrátka zaručit využití „dobrého“ terminálu na kterékoli z běžných desktopových platforem. To příhodně nahrává schopnosti Rust cross-compilovat. Jen stačí stáhnout „build toolkit“ pro příslušnou platformu, například pomocí
+\begin{lstlisting}
+$ rustup target add x86_64-pc-windows-msvc
+\end{lstlisting}
+
+Poté lze zkompilovat pro tuto platformu pomocí
+\begin{lstlisting}
+cargo run --target x86_64-pc-windows-msvc
+\end{lstlisting}
+
+V nově vytvořené složce \texttt{target }
+
+
+\end{document}
