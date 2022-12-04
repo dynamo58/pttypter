@@ -41,13 +41,10 @@ fn infer_token(s: &String) -> LexItem {
 // turn the input into well-defined lexed objects
 pub fn lex(input: String) -> Vec<LexItem> {
     let mut result = Vec::new();
-
     let mut char_bank = String::new();
     let mut env: Option<Environment> = None;
 
-    // let mut it = input.chars().peekable();
     for c in input.chars() {
-        // println!("processing char {c}");
         match c {
             '{' => match env {
                 Some(Environment::ItemValueInside) | Some(Environment::ItemNameInside) => {
@@ -57,9 +54,7 @@ pub fn lex(input: String) -> Vec<LexItem> {
                     env = Some(Environment::Scope);
                     result.push(LexItem::LBrace);
                 }
-                _ => {
-                    dbg!(&env, &c);
-                }
+                _ => (),
             },
             '}' => match env {
                 Some(Environment::ItemValueInside) | Some(Environment::ItemNameInside) => {
@@ -81,9 +76,7 @@ pub fn lex(input: String) -> Vec<LexItem> {
                     result.push(LexItem::RBrace);
                     env = Some(Environment::Scope);
                 }
-                _ => {
-                    dbg!(&env, &c);
-                }
+                _ => (),
             },
             '"' => match env {
                 Some(Environment::ItemNameInside) => {
@@ -106,9 +99,7 @@ pub fn lex(input: String) -> Vec<LexItem> {
                     result.push(LexItem::Quote);
                     env = Some(Environment::ItemValueInside);
                 }
-                _ => {
-                    dbg!(&env);
-                }
+                _ => (),
             },
             ':' => match env {
                 Some(Environment::ItemValueInside) | Some(Environment::ItemNameInside) => {
@@ -118,9 +109,7 @@ pub fn lex(input: String) -> Vec<LexItem> {
                     result.push(LexItem::Colon);
                     env = Some(Environment::PostPostItemName);
                 }
-                _ => {
-                    dbg!(&env, &c);
-                }
+                _ => (),
             },
             ',' => match env {
                 Some(Environment::ItemValueInside) | Some(Environment::ItemNameInside) => {
@@ -152,9 +141,7 @@ pub fn lex(input: String) -> Vec<LexItem> {
                     result.push(LexItem::BracketComma);
                     env = Some(Environment::ListScope);
                 }
-                _ => {
-                    dbg!(&env, &c);
-                }
+                _ => (),
             },
             '[' => match env {
                 Some(Environment::ItemValueInside) | Some(Environment::ItemNameInside) => {
@@ -164,9 +151,7 @@ pub fn lex(input: String) -> Vec<LexItem> {
                     result.push(LexItem::LBracket);
                     env = Some(Environment::ListScope);
                 }
-                _ => {
-                    dbg!(&env, &c);
-                }
+                _ => (),
             },
             ']' => match env {
                 Some(Environment::ItemValueInside) | Some(Environment::ItemNameInside) => {
@@ -181,9 +166,7 @@ pub fn lex(input: String) -> Vec<LexItem> {
                     result.push(LexItem::RBracket);
                     env = Some(Environment::PostItemValue);
                 }
-                _ => {
-                    dbg!(&env, &c);
-                }
+                _ => (),
             },
             '\n' | '\t' | '\r' => {
                 continue;

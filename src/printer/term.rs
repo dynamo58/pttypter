@@ -20,13 +20,12 @@ pub fn print(lexed: Vec<LexItem>, theme_kind: ThemeKind) {
     for l in lexed {
         match l {
             LexItem::LBrace => {
-                col(theme.fg, "{");
+                col(theme.fg, "{\r\n");
                 indent_num += 1;
-                print!("\r\n");
                 col(theme.fg, "  ".repeat(indent_num).as_str());
             }
             LexItem::RBrace => {
-                indent_num -= 1;
+                indent_num -= if indent_num > 0 { 1 } else { 0 };
                 col(
                     theme.fg,
                     format!("\r\n{}", "  ".repeat(indent_num)).as_str(),
@@ -39,7 +38,7 @@ pub fn print(lexed: Vec<LexItem>, theme_kind: ThemeKind) {
             }
             LexItem::RBracket => {
                 col(theme.fg, "]");
-                indent_num -= 1;
+                indent_num -= if indent_num > 0 { 1 } else { 0 };
             }
             LexItem::Quote => col(theme.fg, "\""),
             LexItem::Colon => col(theme.fg, ": "),

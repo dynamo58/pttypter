@@ -18,29 +18,6 @@ static TEMPLATE: &'static str = r#"
 			padding: 0;
 		}
 
-		{{ STYLES }}
-	</style>
-
-	<pre class="__pttypter_pre">
-{{ CODE }}
-	</pre>
-"#;
-
-// // a wrapper for appending a piece of json
-// // (so that it doesn't get AS messy)
-// fn span<'a>(c: &'static str) -> &'a str {
-//     return;
-// }
-
-pub fn print(lexed: Vec<LexItem>, theme_kind: ThemeKind) {
-    let mut json = String::new();
-
-    let theme = match theme_kind {
-        ThemeKind::Dark => &GRUVBOX_DARK,
-        _ => &GRUVBOX_LIGHT,
-    };
-
-    let theme_styles = r#"
 		.__pttypter_pre {
 			background-color: {{ BG }};
 			color: {{ FG }};
@@ -65,12 +42,18 @@ pub fn print(lexed: Vec<LexItem>, theme_kind: ThemeKind) {
 		.__pttypter__keyword {
 			color: {{ KEYWORD }};
 		}
-	"#
-    .replace("{{ BG }}", theme.bg.to_html_string().as_str())
-    .replace("{{ FG }}", theme.fg.to_html_string().as_str())
-    .replace("{{ NUMBER }}", theme.number.to_html_string().as_str())
-    .replace("{{ KEYWORD }}", theme.keyword.to_html_string().as_str())
-    .replace("{{ STRING }}", theme.string.to_html_string().as_str());
+	</style>
+
+	<pre class="__pttypter_pre">{{ CODE }}</pre>
+"#;
+
+pub fn print(lexed: Vec<LexItem>, theme_kind: ThemeKind) {
+    let mut json = String::new();
+
+    let theme = match theme_kind {
+        ThemeKind::Dark => &GRUVBOX_DARK,
+        _ => &GRUVBOX_LIGHT,
+    };
 
     let mut indent_num: usize = 0;
     for l in lexed {
@@ -113,7 +96,11 @@ pub fn print(lexed: Vec<LexItem>, theme_kind: ThemeKind) {
     print!(
         "\n{}",
         TEMPLATE
-            .replace("{{ STYLES }}", theme_styles.as_str())
             .replace("{{ CODE }}", json.as_str())
+            .replace("{{ BG }}", theme.bg.to_html_string().as_str())
+            .replace("{{ FG }}", theme.fg.to_html_string().as_str())
+            .replace("{{ NUMBER }}", theme.number.to_html_string().as_str())
+            .replace("{{ KEYWORD }}", theme.keyword.to_html_string().as_str())
+            .replace("{{ STRING }}", theme.string.to_html_string().as_str())
     )
 }

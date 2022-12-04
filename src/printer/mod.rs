@@ -63,7 +63,6 @@ pub struct Theme {
 
 pub static GRUVBOX_DARK: Theme = Theme {
     kind: ThemeKind::Dark,
-    // bg: (40, 200, 40),
     bg: (40, 40, 40),
     number: (177, 98, 134),
     string: (215, 153, 33),
@@ -79,7 +78,3 @@ pub static GRUVBOX_LIGHT: Theme = Theme {
     fg: (60, 56, 54),
     keyword: (204, 35, 29),
 };
-
-// trait JSONPrinter {
-// fn print(lexed: Vec<LexItem>, theme: ThemeKind);
-// }
