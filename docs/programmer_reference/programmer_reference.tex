@@ -130,15 +130,15 @@ Tedy není nutné tyto hodnoty nějak transformovat. Oba printery na konci proce
 \section{Kompilace a cross-platform}
 Žádné z vývojových prostředí nebyly až na použití ANSI kódů pro terminál platformově specifické. ANSI kódy však může zkrátka zaručit využití „dobrého“ terminálu na kterékoli z běžných desktopových platforem. To příhodně nahrává schopnosti Rust cross-compilovat. Jen stačí stáhnout „build toolkit“ pro příslušnou platformu, například pomocí
 \begin{lstlisting}
-$ rustup target add x86_64-pc-windows-msvc
+$ rustup target add x86_64-pc-windows-gnu
 \end{lstlisting}
 
 Poté lze zkompilovat pro tuto platformu pomocí
 \begin{lstlisting}
-cargo run --target x86_64-pc-windows-msvc
+cargo run --target x86_64-pc-windows-gnu
 \end{lstlisting}
 
-V nově vytvořené složce \texttt{target }
+v nově vytvořené složce \texttt{target}.
 
 
 \end{document}
