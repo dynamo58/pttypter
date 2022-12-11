@@ -31,8 +31,8 @@ pub enum Environment {
 // used when a non-string value is to be appended to the lex stack
 fn infer_token(s: &String) -> LexItem {
     match s.as_str() {
-        "True" => LexItem::True,
-        "False" => LexItem::False,
+        "true" => LexItem::True,
+        "false" => LexItem::False,
         "null" => LexItem::Null,
         x => LexItem::Num(x.to_owned()),
     }
@@ -49,7 +49,8 @@ pub fn lex(input: String) -> Vec<LexItem> {
     let mut char_bank = String::new();
     let mut env: Option<Environment> = None;
 
-    for c in input.chars() {
+    let mut chars = input.chars().peekable();
+    while let Some(&c) = chars.peek() {
         match c {
             '{' => match env {
                 Some(Environment::ItemValueInside) | Some(Environment::ItemNameInside) => {
@@ -173,20 +174,17 @@ pub fn lex(input: String) -> Vec<LexItem> {
                 }
                 _ => (),
             },
-            '\n' | '\t' | '\r' => {
-                continue;
-            }
             ' ' => match env {
                 Some(Environment::ItemValueInside) | Some(Environment::ItemNameInside) => {
                     char_bank.push(c);
                 }
-                _ => {
-                    continue;
-                }
+                _ => (),
             },
-            '\\' => {
-                println!("fired! char: {c}")
-            }
+            '\n' | '\t' | '\r' => (),
+            '\\' => match chars.next() {
+                Some(a) => char_bank.push(a),
+                None => char_bank.push('\\'),
+            },
             _ => {
                 if env == Some(Environment::PostPostItemName) {
                     env = Some(Environment::ItemValueToken);
@@ -194,7 +192,11 @@ pub fn lex(input: String) -> Vec<LexItem> {
                 char_bank.push(c);
             }
         }
+
+        chars.next();
     }
+
+    // println!("{:#?}", result);
 
     result
 }
@@ -204,9 +206,12 @@ mod tests {
     use super::lex;
     use super::LexItem;
 
-    fn assert_vecs<T: PartialEq>(v1: Vec<T>, v2: Vec<T>) {
+    fn assert_vecs<T: PartialEq + std::fmt::Debug>(v1: Vec<T>, v2: Vec<T>) {
         assert!(v1.len() == v2.len());
         for i in 0..v1.len() {
+            if !(v1[i] == v2[i]) {
+                println!("{:?} -- {:?}", v1[i], v2[i])
+            }
             assert!(v1[i] == v2[i]);
         }
     }
@@ -227,6 +232,62 @@ mod tests {
                 LexItem::Quote,
                 LexItem::Colon,
                 LexItem::Num("10".into()),
+                LexItem::RBrace,
+            ],
+        );
+    }
+
+    #[test]
+    fn one_key_one_val_string() {
+        assert_vecs(
+            lex("{\"a\": \"a\"}".into()),
+            vec![
+                LexItem::LBrace,
+                LexItem::Quote,
+                LexItem::Str("a".into()),
+                LexItem::Quote,
+                LexItem::Colon,
+                LexItem::Quote,
+                LexItem::Str("a".into()),
+                LexItem::Quote,
+                LexItem::RBrace,
+            ],
+        );
+    }
+
+    #[test]
+    fn one_key_one_val_keyword() {
+        assert_vecs(
+            lex("{\"a\": null}".into()),
+            vec![
+                LexItem::LBrace,
+                LexItem::Quote,
+                LexItem::Str("a".into()),
+                LexItem::Quote,
+                LexItem::Colon,
+                LexItem::Null,
+                LexItem::RBrace,
+            ],
+        );
+    }
+
+    #[test]
+    fn multiple_keys() {
+        assert_vecs(
+            lex("{\"a\": 1, \"b\": true}".into()),
+            vec![
+                LexItem::LBrace,
+                LexItem::Quote,
+                LexItem::Str("a".into()),
+                LexItem::Quote,
+                LexItem::Colon,
+                LexItem::Num("1".into()),
+                LexItem::BraceComma,
+                LexItem::Quote,
+                LexItem::Str("b".into()),
+                LexItem::Quote,
+                LexItem::Colon,
+                LexItem::True,
                 LexItem::RBrace,
             ],
         );

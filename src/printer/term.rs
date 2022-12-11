@@ -1,3 +1,5 @@
+// printing into terminal
+
 use ansi_term::Color;
 
 use super::ThemeKind;

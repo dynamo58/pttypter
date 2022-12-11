@@ -60,7 +60,7 @@
 {\Huge \textbf{pttypter}}
 \vfill
 {\huge Programátorská příručka} \\
-{\large verze \texttt{1.0.0}}
+{\large verze \texttt{1.1.0}}
 \vfill
 {\Large Marek Smolík (62880168)} \\
 \today
@@ -111,7 +111,7 @@ pub enum LexItem {
 }
 \end{lstlisting}
 
-Zde už se nachází první z konsekvencí faktu, že \texttt{pttypter} \textbf{neprovádí žádnou validitu kódu}. Pouze se snaží co nejlépe kód ztokenizovat. Zde konkrétně je to vidno na 11. řádku, kde je JSONové číslo reprezentované pouhým řetězcem znaků, nikoliv „skutečným“ číslem.
+Zde už se nachází první z konsekvencí faktu, že \texttt{pttypter} \textbf{neprování žádnou validaci kódu}. Pouze se snaží co nejlépe kód ztokenizovat. Zde konkrétně je to vidno na 11. řádku, kde je JSONové číslo reprezentované pouhým řetězcem znaků, nikoliv „skutečným“ číslem.
 
 Samotné lexování je prováděno tak, že je iterováno postupně přes každý znak vstupu. Přitom je zachována informace o současném „prostředí“. Tím je reprezentováno, kde se momentálně exekuce nachází vzhledem k syntaktické struktuře JSONu a dle toho je s nově načtenými znaky různě zacházeno. Například se znakem \texttt{:} bude jinak zacházeno
 \begin{itemize}
@@ -126,19 +126,4 @@ Když byl celý vstup zpracován, lexer vrátí vektor (list) těchto položek \
 \end{enumerate}
 
 Tedy není nutné tyto hodnoty nějak transformovat. Oba printery na konci procedury vrátí řetězec znaků, který je následovně vypsán na standartní výstup (\texttt{STDOUT}) a programem je vrácen výstupový kód \texttt{0}. Snad už jen dodat, že výstup je indentován 2 mezerami a jednotlivé položky listů neodřádkovávají za jejich mezerou. Ostatní možné volby pro formátovní jsou ty používané u souborů JSON zcela běžně.
-
-\section{Kompilace a cross-platform}
-Žádné z vývojových prostředí nebyly až na použití ANSI kódů pro terminál platformově specifické. ANSI kódy však může zkrátka zaručit využití „dobrého“ terminálu na kterékoli z běžných desktopových platforem. To příhodně nahrává schopnosti Rust cross-compilovat. Jen stačí stáhnout „build toolkit“ pro příslušnou platformu, například pomocí
-\begin{lstlisting}
-$ rustup target add x86_64-pc-windows-gnu
-\end{lstlisting}
-
-Poté lze zkompilovat pro tuto platformu pomocí
-\begin{lstlisting}
-cargo run --target x86_64-pc-windows-gnu
-\end{lstlisting}
-
-v nově vytvořené složce \texttt{target}.
-
-
 \end{document}

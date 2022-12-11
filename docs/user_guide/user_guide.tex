@@ -60,7 +60,7 @@
 {\Huge \textbf{pttypter}}
 \vfill
 {\huge Uživatelská příručka} \\
-{\large verze \texttt{1.0.0}}
+{\large verze \texttt{1.1.0}}
 \vfill
 {\Large Marek Smolík (62880168)} \\
 \today
@@ -103,7 +103,7 @@ OPTIONS:
     \caption{Výstup po invokaci programu s parametrem \texttt{--h} nebo \texttt{----h}}
 \end{figure}
 
-Jediným povinným parametrem je \texttt{----input}, který slouží k zadávání samotného kódu JSON. Parametr \texttt{----theme} slouží k nastavení barevného schéma. Jediné možné hodnoty jsou \texttt{dark} a \texttt{light}. Každá z těchto variant korespenduje k příslušné variaci barevného řežimu inspirovaného stylem \textit{Gruvbox}, původně vytvořeným \href{https://github.com/morhetz}{Pavlem Percevem} pro editor vim. Výchozí hodnota je \texttt{dark}, čiže tmavá varianta.
+Hlavním parametrem je \texttt{----input}, který slouží k zadávání samotného JSONu. Parametr \texttt{----theme} slouží k nastavení barevného schéma. Jediné možné hodnoty jsou \texttt{dark} a \texttt{light}. Každá z těchto variant korespenduje k příslušné variaci barevného řežimu inspirovaného stylem \textit{Gruvbox}, původně vytvořeným \href{https://github.com/morhetz}{Pavlem Percevem} pro editor vim. Výchozí hodnota je \texttt{dark}, tedy tmavá.
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=0.8\textwidth]{term}
@@ -111,8 +111,9 @@ Jediným povinným parametrem je \texttt{----input}, který slouží k zadáván
     \caption{Ukázka invokace programu se zadáním kódu s výstupem v terminálu}
 \end{figure}
 
-Jak lze vidět, program ignoruje všechny whitespace znaky a kód řádně naformátuje a zabarví. Jediným problémem je, že speciální znaky jako \texttt{"} je nutno označit zpětným lomítkem \texttt{\textbackslash}, avšak to je spíše záležitost shellu, kterým je program invokován. 
-Uživatelé unixových systémů (respektive uživatelé neprimitivních terminálových prostředí) jistě ocení i možnost použití rour k zadávání vstupu.
+Jak lze vidět, program ignoruje všechny whitespace znaky a kód řádně naformátuje a zabarví. Jediným problémem je, že speciální znaky jako \texttt{"} je nutno označit zpětným lomítkem \texttt{\textbackslash}, avšak to je spíše záležitost shellu, kterým je program invokován.
+
+Pokud používaný shell disponuje funkcionalitou rour, lze jich využít.
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=0.8\textwidth]{term2}
@@ -120,9 +121,8 @@ Uživatelé unixových systémů (respektive uživatelé neprimitivních termin�
     \caption{Použití rour k zadávání vstupního JSON kódu}
 \end{figure}
 
-Druhou, alternativní, možností výstupu je HTML + CSS kód. Ten lze získat například následovně:
-
-\begin{lstlisting}[language=HTML]
+Alternativní, možností výstupu je HTML + CSS kód. Ten lze získat například následovně:
+\begin{lstlisting}
 $ pttypter --input '{ "je_to_super": True, "problem": null}' --output html --theme light
 
 <style>
@@ -176,13 +176,20 @@ $ pttypter --input '{ "je_to_super": True, "problem": null}' --output html --the
 
 \end{lstlisting}
 
-Někteří z uživatelů opět mohou využít rour a nasměrovat tento výstup programu do nějakého souboru přípony \texttt{html}. Při otevření tohoto souboru (respektive překopírování výstupu) ve webovém prohlížeči lze spatřit blok kódu vygenerovaný programem.
+Pokud používaný shell podporuje roury, lze následovně výstup také nasměrovat přímo do souboru přípony \texttt{html}. Při otevření tohoto souboru (respektive překopírování výstupu) ve webovém prohlížeči lze spatřit blok kódu vygenerovaný programem.
 
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=0.8\textwidth]{web1}
     \end{center}
     \caption{Ukázka vyrenderovaného HTML+CSS kódu vygenerovaného \texttt{pttypter}em}
+\end{figure}
+
+\begin{figure}[H]
+    \begin{center}
+        \includegraphics[width=0.8\textwidth]{term4}
+    \end{center}
+    \caption{Ukázka vypsání většího JSON souboru}
 \end{figure}
 
 \section{Validita vstupního kódu}

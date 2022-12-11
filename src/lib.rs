@@ -3,9 +3,10 @@ use printer::{Output, ThemeKind};
 pub mod lexer;
 pub mod printer;
 
+// what CLI arguments should look like
 #[derive(Debug)]
 pub struct Args {
-    pub input: String,
+    pub input: Option<String>,
     pub output: Option<Output>,
     pub theme: Option<ThemeKind>,
 }
@@ -19,7 +20,10 @@ pub fn parse_args() -> Result<Args, pico_args::Error> {
     }
 
     let args = Args {
-        input: pargs.value_from_str("--input")?,
+        input: match pargs.opt_value_from_str("--input") {
+            Ok(a) => a,
+            Err(e) => return Err(e),
+        },
         theme: Some(
             pargs
                 .opt_value_from_str("--theme")?
@@ -35,19 +39,5 @@ pub fn parse_args() -> Result<Args, pico_args::Error> {
     Ok(args)
 }
 
-pub static HELP: &'static str = r#"
-pttypter
-Marek Smolik, 2022
-Simple CLI app to pretty-print JSON
-
-USAGE:
-  pttypter [OPTIONS]
-
-FLAGS:
-  -h, --help             Prints help information
-
-OPTIONS:
-  --input  STRING        The input JSON code
-  --theme  STRING        dark/light [DEFAULT: dark]
-  --output STRING        html/term  [DEFAULT: term]
-"#;
+// help print
+pub static HELP: &'static str = include_str!("../README.txt");
