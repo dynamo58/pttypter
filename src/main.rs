@@ -4,10 +4,8 @@ use pttypter::lexer::lex;
 use pttypter::parse_args;
 use pttypter::printer::{html, term, Output, ThemeKind};
 
+// entry point of the program
 fn main() {
-    #[cfg(target_os = "windows")]
-    ansi_term::enable_ansi_support().expect("Error: failed to enable ANSI");
-
     let args = parse_args().unwrap_or_else(|e| {
         let mut input = String::new();
         std::io::stdin()

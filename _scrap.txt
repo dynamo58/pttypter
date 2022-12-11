@@ -1,0 +1,16 @@
+Vážený pane Mestku,
+
+Děkuji za rychlou zpětnou vazbu. Ohledně Vámi ukázaných problémů:
+
+1) Daný příkaz mi v Linuxu funguje. Na Windows <TODO>
+
+2) Toto je má chyba vzniklá nedostatečným testováním vstupu. Chybou zde bylo nebrání ohledu na uživatelem "escaplé" znaky. Nyní je tato chyba opravena.
+
+K Vašim dalším poznámkám:
+
+- V lexer.rs mám málo testů, jelikož jsem si řekl že bych je měl psát, avšak poté jsem je z lenosti nepsal a byl jsem si jist správností mého kódu (což byla chyba, jak se ukázalo). Několik testů jsem doplnil...
+
+- `lib.rs` je speciální soubor a slouží k:
+
+1) Definování sdíleného kódu
+2) Zpřístupnění kódu ze souborů, jejichž název není standartizován. Například přímo v kódu je v něm `pub mod lexer;` -- tento útržek slouží k zpřístupnění složky `lexer`. Kdyby tam tento útržek nebyl, k této složce (jejímu obsahu) by z `main.rs` vůbec nešlo přistoupit.

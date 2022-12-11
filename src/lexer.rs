@@ -40,7 +40,12 @@ fn infer_token(s: &String) -> LexItem {
 
 // turn the input into well-defined lexed objects
 pub fn lex(input: String) -> Vec<LexItem> {
+    // on Windows one must enable the ANSI support manually
+    #[cfg(target_os = "windows")]
+    ansi_term::enable_ansi_support().expect("Error: failed to enable ANSI");
+
     let mut result = Vec::new();
+    // used as a buffer when reading a longer token (string, keyword, number ,...)
     let mut char_bank = String::new();
     let mut env: Option<Environment> = None;
 
@@ -179,6 +184,9 @@ pub fn lex(input: String) -> Vec<LexItem> {
                     continue;
                 }
             },
+            '\\' => {
+                println!("fired! char: {c}")
+            }
             _ => {
                 if env == Some(Environment::PostPostItemName) {
                     env = Some(Environment::ItemValueToken);
@@ -204,7 +212,23 @@ mod tests {
     }
 
     #[test]
-    fn t() {
+    fn empty() {
         assert_vecs(lex("{}".into()), vec![LexItem::LBrace, LexItem::RBrace]);
+    }
+
+    #[test]
+    fn one_key_one_val_number() {
+        assert_vecs(
+            lex("{\"a\": 10}".into()),
+            vec![
+                LexItem::LBrace,
+                LexItem::Quote,
+                LexItem::Str("a".into()),
+                LexItem::Quote,
+                LexItem::Colon,
+                LexItem::Num("10".into()),
+                LexItem::RBrace,
+            ],
+        );
     }
 }
